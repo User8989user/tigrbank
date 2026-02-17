@@ -1,10 +1,12 @@
 package com.tigrbank.service;
 
+import java.util.List;
+
 import com.tigrbank.domain.BankAccount;
+import com.tigrbank.domain.Operation;
 import com.tigrbank.domain.Type;
 import com.tigrbank.repository.BankAccountRepository;
 import com.tigrbank.repository.OperationRepository;
-import java.util.List;
 
 public class AccountService {
     private final BankAccountRepository accountRepo;
