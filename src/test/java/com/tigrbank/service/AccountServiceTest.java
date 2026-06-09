@@ -3,6 +3,7 @@ package com.tigrbank.service;
 import com.tigrbank.domain.BankAccount;
 import com.tigrbank.domain.Operation;
 import com.tigrbank.domain.Type;
+import com.tigrbank.domain.factory.DomainObjectFactory;
 import com.tigrbank.repository.BankAccountRepository;
 import com.tigrbank.repository.OperationRepository;
 import org.junit.jupiter.api.Test;
@@ -16,6 +17,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -26,15 +28,20 @@ class AccountServiceTest {
     private OperationRepository operationRepo;
     @InjectMocks
     private AccountService accountService;
+    @Mock private DomainObjectFactory factory;
 
     @Test
     void createAccount_ValidData_ReturnsAccount() {
+        when(factory.createBankAccount(anyString(), anyDouble()))
+            .thenAnswer(inv -> new BankAccount(null, inv.getArgument(0), inv.getArgument(1)));
         when(accountRepo.save(any(BankAccount.class))).thenAnswer(i -> i.getArgument(0));
+
         BankAccount account = accountService.createAccount("Test", 100.0);
         assertNotNull(account);
         assertEquals("Test", account.getName());
         assertEquals(100.0, account.getBalance());
         verify(accountRepo).save(any());
+        verify(factory).createBankAccount("Test", 100.0);
     }
 
     @Test

@@ -4,6 +4,8 @@ import com.tigrbank.domain.BankAccount;
 import com.tigrbank.domain.Category;
 import com.tigrbank.domain.Operation;
 import com.tigrbank.domain.Type;
+import com.tigrbank.domain.factory.DomainObjectFactory;
+import com.tigrbank.domain.factory.StandardDomainFactory;
 import com.tigrbank.repository.BankAccountRepository;
 import com.tigrbank.repository.CategoryRepository;
 import com.tigrbank.repository.OperationRepository;
@@ -27,15 +29,19 @@ class ServiceIntegrationTest {
     private AccountService accountService;
     private CategoryService categoryService;
     private OperationService operationService;
+    private DomainObjectFactory factory;  
+
 
     @BeforeEach
     void setUp() {
         accountRepo = new InMemoryBankAccountRepository();
         categoryRepo = new InMemoryCategoryRepository();
         operationRepo = new InMemoryOperationRepository();
-        accountService = new AccountService(accountRepo, operationRepo);
-        categoryService = new CategoryService(categoryRepo, operationRepo);
-        operationService = new OperationService(operationRepo, accountRepo, categoryRepo);
+        factory = new StandardDomainFactory();   // создаём фабрику
+
+        accountService = new AccountService(accountRepo, operationRepo, factory);
+        categoryService = new CategoryService(categoryRepo, operationRepo, factory);
+        operationService = new OperationService(operationRepo, accountRepo, categoryRepo, factory);
     }
 
     @Test

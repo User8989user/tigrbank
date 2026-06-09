@@ -4,6 +4,7 @@ import com.tigrbank.domain.BankAccount;
 import com.tigrbank.domain.Category;
 import com.tigrbank.domain.Operation;
 import com.tigrbank.domain.Type;
+import com.tigrbank.domain.factory.DomainObjectFactory;
 import com.tigrbank.repository.BankAccountRepository;
 import com.tigrbank.repository.CategoryRepository;
 import com.tigrbank.repository.OperationRepository;
@@ -17,6 +18,8 @@ import java.time.LocalDate;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -29,6 +32,8 @@ class OperationServiceTest {
     private CategoryRepository categoryRepo;
     @InjectMocks
     private OperationService operationService;
+    @Mock private DomainObjectFactory factory;
+
 
     @Test
     void createOperation_ValidIncome_UpdatesBalanceAndSaves() {
@@ -38,14 +43,21 @@ class OperationServiceTest {
         Category category = new Category(categoryId, Type.INCOME, "Salary");
         when(accountRepo.findById(accountId)).thenReturn(Optional.of(account));
         when(categoryRepo.findById(categoryId)).thenReturn(Optional.of(category));
-        when(operationRepo.save(any())).thenAnswer(i -> i.getArgument(0));
+        
+        when(factory.createOperation(eq(Type.INCOME), eq(accountId), eq(50.0), any(LocalDate.class), eq("desc"), eq(categoryId)))
+            .thenAnswer(inv -> new Operation(null, inv.getArgument(0), inv.getArgument(1),
+                                             inv.getArgument(2), inv.getArgument(3),
+                                             inv.getArgument(4), inv.getArgument(5)));
+        
+        when(operationRepo.save(any(Operation.class))).thenAnswer(i -> i.getArgument(0));
 
         Operation op = operationService.createOperation(Type.INCOME, accountId, 50.0, LocalDate.now(), "desc", categoryId);
 
         assertNotNull(op);
-        assertEquals(150.0, account.getBalance()); // баланс увеличился
-        verify(operationRepo).save(any());
+        assertEquals(150.0, account.getBalance());
+        verify(operationRepo).save(any(Operation.class));
         verify(accountRepo).save(account);
+        verify(factory).createOperation(Type.INCOME, accountId, 50.0, any(LocalDate.class), "desc", categoryId);
     }
 
     @Test
