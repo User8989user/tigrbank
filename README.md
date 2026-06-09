@@ -149,4 +149,8 @@ mvn exec:java -Dexec.mainClass="com.tigrbank.console.ConsoleApp"
 
 Все шаги выполняются последовательно в одном сценарии. В скрипте добавлены случайные задержки sleep() и проверки ответов (статус 200/201/204). Это соответствует требованию комбинированного сценария (GET, POST, DELETE).
 
+### Отчет о тестировании в формате HTML
+
+https://github.com/User8989user/tigrbank/tree/nagrtest/reporthtml
+
 
