@@ -100,3 +100,9 @@ CSV: ручная запись/чтение с простым парсингом
 JSON: используется библиотека Jackson, сериализация в список объектов.
 
 YAML: используется Jackson.
+
+
+
+mvn exec:java -Dexec.mainClass="com.tigrbank.console.ConsoleApp"
+
+mvn test
