@@ -6,9 +6,9 @@ import com.tigrbank.domain.Type;
 import com.tigrbank.domain.factory.DomainObjectFactory;
 import com.tigrbank.repository.CategoryRepository;
 import com.tigrbank.repository.OperationRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -16,8 +16,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -26,21 +25,28 @@ class CategoryServiceTest {
     private CategoryRepository categoryRepo;
     @Mock
     private OperationRepository operationRepo;
-    @InjectMocks
+    @Mock
+    private DomainObjectFactory factory;
+    
     private CategoryService categoryService;
-    @Mock private DomainObjectFactory factory;
+
+    @BeforeEach
+    void setUp() {
+        categoryService = new CategoryService(categoryRepo, operationRepo, factory);
+    }
 
     @Test
-void createCategory_ValidData_SavesAndReturns() {
-    when(factory.createCategory(any(Type.class), anyString()))
-        .thenAnswer(inv -> new Category(null, inv.getArgument(0), inv.getArgument(1)));
-    when(categoryRepo.save(any(Category.class))).thenAnswer(i -> i.getArgument(0));
+    void createCategory_ValidData_SavesAndReturns() {
+        when(factory.createCategory(any(Type.class), anyString()))
+            .thenAnswer(inv -> new Category(null, inv.getArgument(0), inv.getArgument(1)));
+        when(categoryRepo.save(any(Category.class))).thenAnswer(i -> i.getArgument(0));
 
-    Category category = categoryService.createCategory(Type.INCOME, "Salary");
-    assertEquals(Type.INCOME, category.getType());
-    assertEquals("Salary", category.getName());
-    verify(factory).createCategory(Type.INCOME, "Salary");
-}
+        Category category = categoryService.createCategory(Type.INCOME, "Salary");
+        assertEquals(Type.INCOME, category.getType());
+        assertEquals("Salary", category.getName());
+        verify(factory).createCategory(Type.INCOME, "Salary");
+        verify(categoryRepo).save(any(Category.class));
+    }
 
     @Test
     void updateCategory_ExistingId_UpdatesFields() {
