@@ -1,5 +1,8 @@
 package com.tigrbank.importexport;
 
+import com.tigrbank.domain.BankAccount;
+import com.tigrbank.domain.Category;
+import com.tigrbank.domain.Operation;
 import java.util.List;
 
 public class ParsedData {

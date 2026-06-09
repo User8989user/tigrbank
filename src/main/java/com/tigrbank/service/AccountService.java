@@ -5,23 +5,27 @@ import java.util.List;
 import com.tigrbank.domain.BankAccount;
 import com.tigrbank.domain.Operation;
 import com.tigrbank.domain.Type;
+import com.tigrbank.domain.factory.DomainObjectFactory;
 import com.tigrbank.repository.BankAccountRepository;
 import com.tigrbank.repository.OperationRepository;
 
 public class AccountService {
     private final BankAccountRepository accountRepo;
     private final OperationRepository operationRepo;
+    private final DomainObjectFactory factory;
 
-    public AccountService(BankAccountRepository accountRepo, OperationRepository operationRepo) {
+    public AccountService(BankAccountRepository accountRepo, OperationRepository operationRepo,
+            DomainObjectFactory factory) {
         this.accountRepo = accountRepo;
         this.operationRepo = operationRepo;
+        this.factory = factory;
     }
 
     public BankAccount createAccount(String name, double initialBalance) {
         if (initialBalance < 0) {
             throw new IllegalArgumentException("Initial balance cannot be negative");
         }
-        BankAccount account = new BankAccount(null, name, initialBalance);
+        BankAccount account = factory.createBankAccount(name, initialBalance);
         return accountRepo.save(account);
     }
 

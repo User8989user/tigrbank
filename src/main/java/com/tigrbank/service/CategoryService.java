@@ -2,6 +2,7 @@ package com.tigrbank.service;
 
 import com.tigrbank.domain.Category;
 import com.tigrbank.domain.Type;
+import com.tigrbank.domain.factory.DomainObjectFactory;
 import com.tigrbank.repository.CategoryRepository;
 import com.tigrbank.repository.OperationRepository;
 import java.util.List;
@@ -9,14 +10,20 @@ import java.util.List;
 public class CategoryService {
     private final CategoryRepository categoryRepo;
     private final OperationRepository operationRepo;
+    private final DomainObjectFactory factory;  // добавлено
 
-    public CategoryService(CategoryRepository categoryRepo, OperationRepository operationRepo) {
+    // Конструктор с фабрикой
+    public CategoryService(CategoryRepository categoryRepo, 
+                           OperationRepository operationRepo, 
+                           DomainObjectFactory factory) {
         this.categoryRepo = categoryRepo;
         this.operationRepo = operationRepo;
+        this.factory = factory;
     }
 
+    // Используем фабрику для создания категории
     public Category createCategory(Type type, String name) {
-        Category category = new Category(null, type, name);
+        Category category = factory.createCategory(type, name);  // изменено
         return categoryRepo.save(category);
     }
 

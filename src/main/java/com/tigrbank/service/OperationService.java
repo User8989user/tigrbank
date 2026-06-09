@@ -4,6 +4,7 @@ import com.tigrbank.domain.BankAccount;
 import com.tigrbank.domain.Category;
 import com.tigrbank.domain.Operation;
 import com.tigrbank.domain.Type;
+import com.tigrbank.domain.factory.DomainObjectFactory;
 import com.tigrbank.repository.BankAccountRepository;
 import com.tigrbank.repository.CategoryRepository;
 import com.tigrbank.repository.OperationRepository;
@@ -14,15 +15,20 @@ public class OperationService {
     private final OperationRepository operationRepo;
     private final BankAccountRepository accountRepo;
     private final CategoryRepository categoryRepo;
+    private final DomainObjectFactory factory;  // добавлено
 
+    // Конструктор с фабрикой
     public OperationService(OperationRepository operationRepo,
                             BankAccountRepository accountRepo,
-                            CategoryRepository categoryRepo) {
+                            CategoryRepository categoryRepo,
+                            DomainObjectFactory factory) {
         this.operationRepo = operationRepo;
         this.accountRepo = accountRepo;
         this.categoryRepo = categoryRepo;
+        this.factory = factory;
     }
 
+    // Используем фабрику для создания операции
     public Operation createOperation(Type type, Long accountId, double amount, LocalDate date,
                                      String description, Long categoryId) {
         BankAccount account = accountRepo.findById(accountId)
@@ -39,7 +45,7 @@ public class OperationService {
             date = LocalDate.now();
         }
 
-        Operation op = new Operation(null, type, accountId, amount, date, description, categoryId);
+        Operation op = factory.createOperation(type, accountId, amount, date, description, categoryId);
         Operation saved = operationRepo.save(op);
 
         double delta = (type == Type.INCOME) ? amount : -amount;
@@ -57,7 +63,6 @@ public class OperationService {
         double delta = (op.getType() == Type.INCOME) ? -op.getAmount() : op.getAmount();
         account.setBalance(account.getBalance() + delta);
         accountRepo.save(account);
-
         operationRepo.delete(id);
     }
 
