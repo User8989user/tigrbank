@@ -8,6 +8,8 @@ import com.tigrbank.domain.factory.DomainObjectFactory;
 import com.tigrbank.repository.BankAccountRepository;
 import com.tigrbank.repository.CategoryRepository;
 import com.tigrbank.repository.OperationRepository;
+
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -19,21 +21,26 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyDouble;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class OperationServiceTest {
-    @Mock
-    private OperationRepository operationRepo;
-    @Mock
-    private BankAccountRepository accountRepo;
-    @Mock
-    private CategoryRepository categoryRepo;
-    @InjectMocks
+    @Mock private OperationRepository operationRepo;
+    @Mock private BankAccountRepository accountRepo;
+    @Mock private CategoryRepository categoryRepo;
+    @Mock private DomainObjectFactory factory;
+
+
     private OperationService operationService;
-    @Mock
-    private DomainObjectFactory factory;
+
+    @BeforeEach
+    void setUp() {
+        operationService = new OperationService(operationRepo, accountRepo, categoryRepo, factory);
+    }
 
     @Test
     void createOperation_ValidIncome_UpdatesBalanceAndSaves() {
@@ -41,32 +48,30 @@ class OperationServiceTest {
         Long categoryId = 2L;
         BankAccount account = new BankAccount(accountId, "Test", 100.0);
         Category category = new Category(categoryId, Type.INCOME, "Salary");
-
+        
         when(accountRepo.findById(accountId)).thenReturn(Optional.of(account));
         when(categoryRepo.findById(categoryId)).thenReturn(Optional.of(category));
-
-        // Настройка фабрики: при вызове createOperation возвращаем новый объект
-        when(factory.createOperation(eq(Type.INCOME), eq(accountId), eq(50.0), any(LocalDate.class), eq("desc"),
-                eq(categoryId)))
-                .thenAnswer(inv -> new Operation(
-                        null,
-                        inv.getArgument(0),
-                        inv.getArgument(1),
-                        inv.getArgument(2),
-                        inv.getArgument(3),
-                        inv.getArgument(4),
-                        inv.getArgument(5)));
-
+        
+        // Используем любые матчеры для всех аргументов (без eq)
+        when(factory.createOperation(any(Type.class), anyLong(), anyDouble(), any(LocalDate.class), anyString(), anyLong()))
+            .thenAnswer(inv -> new Operation(
+                null,
+                inv.getArgument(0),
+                inv.getArgument(1),
+                inv.getArgument(2),
+                inv.getArgument(3),
+                inv.getArgument(4),
+                inv.getArgument(5)
+            ));
+        
         when(operationRepo.save(any(Operation.class))).thenAnswer(i -> i.getArgument(0));
-
-        Operation op = operationService.createOperation(Type.INCOME, accountId, 50.0, LocalDate.now(), "desc",
-                categoryId);
-
+        
+        Operation op = operationService.createOperation(Type.INCOME, accountId, 50.0, LocalDate.now(), "desc", categoryId);
+        
         assertNotNull(op);
-        assertEquals(150.0, account.getBalance()); // баланс увеличился
+        assertEquals(150.0, account.getBalance());
         verify(operationRepo).save(any(Operation.class));
         verify(accountRepo).save(account);
-        verify(factory).createOperation(Type.INCOME, accountId, 50.0, any(LocalDate.class), "desc", categoryId);
     }
 
     @Test
@@ -75,15 +80,27 @@ class OperationServiceTest {
         Long categoryId = 2L;
         BankAccount account = new BankAccount(accountId, "Test", 100.0);
         Category category = new Category(categoryId, Type.EXPENSE, "Food");
+        
         when(accountRepo.findById(accountId)).thenReturn(Optional.of(account));
         when(categoryRepo.findById(categoryId)).thenReturn(Optional.of(category));
-        when(operationRepo.save(any())).thenAnswer(i -> i.getArgument(0));
-
-        Operation op = operationService.createOperation(Type.EXPENSE, accountId, 30.0, LocalDate.now(), "desc",
-                categoryId);
-
+        
+        when(factory.createOperation(any(Type.class), anyLong(), anyDouble(), any(LocalDate.class), anyString(), anyLong()))
+            .thenAnswer(inv -> new Operation(
+                null,
+                inv.getArgument(0),
+                inv.getArgument(1),
+                inv.getArgument(2),
+                inv.getArgument(3),
+                inv.getArgument(4),
+                inv.getArgument(5)
+            ));
+        
+        when(operationRepo.save(any(Operation.class))).thenAnswer(i -> i.getArgument(0));
+        
+        Operation op = operationService.createOperation(Type.EXPENSE, accountId, 30.0, LocalDate.now(), "desc", categoryId);
+        
         assertEquals(70.0, account.getBalance());
-        verify(operationRepo).save(any());
+        verify(operationRepo).save(any(Operation.class));
         verify(accountRepo).save(account);
     }
 

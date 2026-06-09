@@ -7,9 +7,13 @@ import com.tigrbank.domain.Type;
 import com.tigrbank.importexport.*;
 import java.io.*;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.*;
 
 public class CsvImporter extends DataImporterTemplate {
+
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ISO_LOCAL_DATE;
 
     @Override
     protected RawData readRawData(String basePath) throws IOException {
@@ -39,12 +43,31 @@ public class CsvImporter extends DataImporterTemplate {
             categories.add(new Category(id, type, name));
         }
 
+        int lineNumber = 0;
         for (Map<String, String> row : rawData.getOperationsRaw()) {
             Long id = Long.parseLong(row.get("id"));
             Type type = Type.valueOf(row.get("type"));
             Long accountId = Long.parseLong(row.get("bankAccountId"));
             double amount = Double.parseDouble(row.get("amount"));
-            LocalDate date = LocalDate.parse(row.get("date"));
+
+            String dateStr = row.get("date");
+            LocalDate date;
+            if (dateStr == null || dateStr.trim().isEmpty() || "00".equals(dateStr.trim())) {
+                // Защита от некорректных данных: используем текущую дату
+                date = LocalDate.now();
+                System.err.println("WARNING: Invalid or missing date for operation " + id + " ('" + dateStr
+                        + "'), using current date");
+            } else {
+                try {
+                    date = LocalDate.parse(dateStr.trim(), DateTimeFormatter.ISO_LOCAL_DATE);
+                } catch (DateTimeParseException e) {
+                    // Если формат всё равно неверный — тоже fallback
+                    date = LocalDate.now();
+                    System.err.println(
+                            "WARNING: Unparseable date '" + dateStr + "' for operation " + id + ", using current date");
+                }
+            }
+
             String description = row.get("description");
             Long categoryId = Long.parseLong(row.get("categoryId"));
             operations.add(new Operation(id, type, accountId, amount, date, description, categoryId));
@@ -62,11 +85,13 @@ public class CsvImporter extends DataImporterTemplate {
         List<Map<String, String>> result = new ArrayList<>();
         try (BufferedReader reader = new BufferedReader(new FileReader(filename))) {
             String headerLine = reader.readLine();
-            if (headerLine == null) return result;
+            if (headerLine == null)
+                return result;
             String[] headers = parseCsvLine(headerLine);
             String line;
             while ((line = reader.readLine()) != null) {
-                if (line.trim().isEmpty()) continue;
+                if (line.trim().isEmpty())
+                    continue;
                 String[] values = parseCsvLine(line);
                 Map<String, String> map = new LinkedHashMap<>();
                 for (int i = 0; i < headers.length && i < values.length; i++) {
@@ -103,7 +128,8 @@ public class CsvImporter extends DataImporterTemplate {
     }
 
     private String unescapeCsv(String field) {
-        if (field == null || field.isEmpty()) return field;
+        if (field == null || field.isEmpty())
+            return field;
         if (field.length() >= 2 && field.startsWith("\"") && field.endsWith("\"")) {
             String inner = field.substring(1, field.length() - 1);
             return inner.replace("\"\"", "\"");

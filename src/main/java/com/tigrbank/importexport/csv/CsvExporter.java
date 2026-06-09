@@ -10,7 +10,7 @@ import java.util.List;
 public class CsvExporter implements DataExporter {
     @Override
     public void exportData(List<BankAccount> accounts, List<Category> categories,
-                           List<Operation> operations, String basePath) throws IOException {
+            List<Operation> operations, String basePath) throws IOException {
         try (PrintWriter writer = new PrintWriter(new FileWriter(basePath + "_accounts.csv"))) {
             writer.println("id,name,balance");
             for (BankAccount a : accounts) {
@@ -28,15 +28,19 @@ public class CsvExporter implements DataExporter {
         try (PrintWriter writer = new PrintWriter(new FileWriter(basePath + "_operations.csv"))) {
             writer.println("id,type,bankAccountId,amount,date,description,categoryId");
             for (Operation o : operations) {
+                String dateStr = o.getDate() != null ? o.getDate().toString() : "";
                 writer.printf("%d,%s,%d,%.2f,%s,%s,%d%n",
                         o.getId(), o.getType(), o.getBankAccountId(), o.getAmount(),
-                        o.getDate().toString(), escapeCsv(o.getDescription()), o.getCategoryId());
+                        escapeCsv(dateStr),
+                        escapeCsv(o.getDescription()),
+                        o.getCategoryId());
             }
         }
     }
 
     private String escapeCsv(String value) {
-        if (value == null) return "";
+        if (value == null)
+            return "";
         if (value.contains(",") || value.contains("\"")) {
             value = value.replace("\"", "\"\"");
             return "\"" + value + "\"";
