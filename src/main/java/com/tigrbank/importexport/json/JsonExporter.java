@@ -17,6 +17,7 @@ public class JsonExporter implements DataExporter {
     public JsonExporter() {
         mapper = new ObjectMapper();
         mapper.registerModule(new JavaTimeModule());
+        mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);   // ключевая строка
         mapper.enable(SerializationFeature.INDENT_OUTPUT);
     }
 
